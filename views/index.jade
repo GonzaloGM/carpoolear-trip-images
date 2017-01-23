@@ -1,0 +1,62 @@
+doctype html
+html(lang='es')
+  head
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    title Carpoolear Trip Images
+    link(rel='stylesheet', href='https://fonts.googleapis.com/css?family=Roboto:700')
+    link(rel='stylesheet', href='/css/styles.css')
+    link(rel='icon', href='favicon.ico?v=2')
+  body
+    p.loading Generating image...
+    div
+      img(id='trips_image')
+      script(src='https://code.jquery.com/jquery-3.1.1.min.js', integrity='sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=', crossorigin='anonymous')
+      script(type='text/javascript', src='js/jquery.retryAjax.js')
+      script(type='text/javascript').
+        // first get JSON with final image URL
+        var settings = {
+          'url': '/generateimg',
+          'contentType': 'application/json; charset=UTF-8'
+        };
+        var maxTries = 10;
+        var interval = 10000;
+
+        $('p.loading').fadeIn(2000);
+
+        new AjaxRetry(settings, maxTries, interval)
+        .done(function(result) {
+          console.log('Got JSON with image URL');
+          // now we get the final image and show it
+          var settings = {
+            'url': `${result.imgURL}`,
+            'contentType': 'application/json; charset=UTF-8'
+          };
+          var maxTries = 30;
+          var interval = 10000;
+
+          new AjaxRetry(settings, maxTries, interval)
+          .done(function(data) {
+            console.log('Got trips image');
+            $('p.loading').fadeOut(2000);
+            $('#trips_image').attr('src', result.imgURL).fadeIn(2000);
+          })
+          .fail(function(error) {
+            $('p.loading').fadeOut(500);
+            setTimeout(function() {
+              $('p.loading').text('Failed getting trips image :(').fadeIn(2000);
+            }, 500);
+          })
+          .always(function(resp) {
+            //- console.log('My ajax call is over.');
+          });
+        })
+        .fail(function(error) {
+          $('p.loading').fadeOut(500);
+          setTimeout(function() {
+            $('p.loading').text('Failed getting image URL :(').fadeIn(2000);
+          }, 500);
+        })
+        .always(function(resp) {
+          //- console.log('My ajax call is over.');
+        });
